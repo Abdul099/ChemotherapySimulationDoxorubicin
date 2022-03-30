@@ -1,4 +1,3 @@
-from math import ceil
 import numpy as np
 import matplotlib.pyplot as plt
 import math
@@ -13,10 +12,8 @@ St = 200 # vascular density (cm^-1)
 A = 0.13*10**-3 # ml-1 inverse volume of patient
 t_half = 4.93 #half life of doxorubicin in  blood
 alpha = 0.693/t_half # time constant for DR decay in blood 
-D = 80 # Dose (mg) can go up to 285 mg
-T = 8*60 #infusion time (minutes)
 phi = 0.4 #volume fraction of extracellular space in tumor 
-
+# ==============================================================
 def integrate(y_vals, h):
     i = 1
     total = y_vals[0] + y_vals[-1]
@@ -29,6 +26,14 @@ def integrate(y_vals, h):
     return total * (h / 3.0)
 # ==============================================================
 def simulate(infusion_time, simulation_time, Dose = 80, plot=True, title=""):
+    '''
+    infusion_time: (mins) duration at which continous injection is made starting t=0 
+    simulaition_time: (mins) duration of simulation 
+    Dose: (mg) Total Dose of Chemotherapy Session 
+    plot: (boolean) plots concentration vs time graph for cv, ce, and ci
+    title: (string) title of the concentration time graphs
+    '''
+
     # Runge-Kutta (RK4) Numerical Integration for System of First-Order Differential Equations
     def ode_system(_t, _y):
         ce = _y[0]
@@ -70,12 +75,11 @@ def simulate(infusion_time, simulation_time, Dose = 80, plot=True, title=""):
     AUC = round(integrate(state_history[:,1], dt), 2)
     print(f'AUC = {AUC}')
     # ==============================================================
-    # plot history
     if plot:
         fig, ax = plt.subplots()
         ax.plot(time, state_history[:, 0], color ='tab:blue', label='Ce')
         ax.set_xlabel('t(min)')
-        ax.set_ylabel('Ce (mg/ml)', color='tab:blue')
+        ax.set_ylabel('Ce & Cv (mg/ml)', color='tab:blue')
         ax2 = ax.twinx()
         ax3 = ax.twinx()
         ax2.plot(time, state_history[:, 1], color='darkgreen', label='Ci')
@@ -92,7 +96,7 @@ def simulate(infusion_time, simulation_time, Dose = 80, plot=True, title=""):
     return state_history, cv_saved, time
 
 simulate(1, 30, Dose=80, title='Concentration Profiles for D=80mg and 1 min Infusion' )
-simulate(8*60, 24*60, Dose=80, title='Concentration Profiles for D=80mg and 8 hours Infusion' )
+simulate(48*60, 60*60, Dose=80, title='Concentration Profiles for D=80mg and 48 hours Infusion' )
 
 infusion_times = [0.1, 0.25, 0.5, 1, 1.5, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] #in hours
 Doses = [50, 150, 250, 350]
