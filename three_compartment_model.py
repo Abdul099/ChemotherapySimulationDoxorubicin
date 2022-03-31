@@ -5,9 +5,6 @@ import math
 #constants
 P = 60*10**(-4) #cm/min
 dc = 6*10**(-3) #cell density 10^5cells/ml x10^-6 to account for units
-Vmax = 0.28 #rate cst for cell membrane trasnport ng/10^5 cells/min
-Ke = 0.219*10**(-3) #Michaelis constant mg/ml
-Ki = 1.37 # also mich constant (ng/10^5 cells)
 St = 200 # vascular density (cm^-1)
 A = 0.13*10**-3 # ml-1 inverse volume of patient
 t_half = 4.93 #half life of doxorubicin in  blood
@@ -25,13 +22,16 @@ def integrate(y_vals, h):
         i += 1
     return total * (h / 3.0)
 # ==============================================================
-def simulate(infusion_time, simulation_time, Dose = 80, plot=True, title=""):
+def simulate(infusion_time, simulation_time, Dose = 80, plot=True, title="", Ke = 0.219*10**(-3), Ki=1.37, Vmax = 0.28):
     '''
     infusion_time: (mins) duration at which continous injection is made starting t=0 
     simulaition_time: (mins) duration of simulation 
     Dose: (mg) Total Dose of Chemotherapy Session 
     plot: (boolean) plots concentration vs time graph for cv, ce, and ci
     title: (string) title of the concentration time graphs
+    ke: (mg/ml) michaelis constant
+    ki: (ng/10^5 cells) other michaelis constant 
+    Vmax: (ng/10^5 cells) rate cst for cell membrane trasnport
     '''
 
     # Runge-Kutta (RK4) Numerical Integration for System of First-Order Differential Equations
@@ -43,7 +43,7 @@ def simulate(infusion_time, simulation_time, Dose = 80, plot=True, title=""):
         ci_new = Vmax*termA #ng/105cells/min  
         return np.array([ce_new,ci_new])
 
-    def rk4(func, tk, _yk, _dt=0.1, **kwargs):
+    def rk4(func, tk, _yk, _dt=0.01, **kwargs):
         # evaluate derivative at several stages within time interval
         f1 = func(tk, _yk, **kwargs)
         f2 = func(tk + _dt / 2, _yk + (f1 * (_dt / 2)), **kwargs)
@@ -92,36 +92,46 @@ def simulate(infusion_time, simulation_time, Dose = 80, plot=True, title=""):
         ax2.legend(loc='upper right')
         ax3.legend(loc='lower right')
         plt.title(title + f'\nAUC = {round(AUC,2)}')
+        plt.savefig(f'./saved_graphs/{title}.png')
         plt.show()
     return state_history, cv_saved, time
+# ==============================================================
+def find_peak_intracellular_concentration(Doses, infusion_times, plot=True, title="", Ke = 0.219*10**(-3), Ki=1.37, Vmax = 0.28):
+        dictionary = {}
+        for Dose in Doses:
+            dictionary[Dose] = []
+        plt.figure()
+        for i in infusion_times:
+            for Dose in Doses:
+                state_history, _, _ = simulate(i*60, 18*60, Dose=Dose, plot=False)
+                peak = max(state_history[:,1])
+                print(peak)
+                dictionary[Dose].append(peak)
+        optimal_times = []
+        for Dose in Doses:
+            plt.plot(infusion_times, dictionary[Dose], label=f'{Dose}mg')
+            optimal_times.append(infusion_times[np.argmax(dictionary[Dose])])
+        plt.legend()
+        plt.title("Peak Intracellular Concentration")
+        plt.xlabel("Infusion Duration")
+        plt.ylabel("Peak Concentration(ng/10^5cells)")
+        plt.savefig(f'./saved_graphs/Peak Intracellular Concentration for Ki-{Ki} and Ke-{Ke}.png')
+        plt.show()
+        plt.figure()
+        plt.plot(Doses, optimal_times)
+        plt.title("Optimal Infusion Time for Different Doses")
+        plt.xlabel("Dose (mg)")
+        plt.ylabel("Optimal Infusion Time (hrs)")
+        plt.savefig(f'./saved_graphs/Optimal Infusion Time for Ki-{Ki} and Ke-{Ke}.png')
+        plt.show()
+# ==============================================================
+#Driver Code
 
-simulate(1, 30, Dose=80, title='Concentration Profiles for D=80mg and 1 min Infusion' )
-simulate(48*60, 60*60, Dose=80, title='Concentration Profiles for D=80mg and 48 hours Infusion' )
+simulate(1, 40, Dose=80, title='Concentration Profiles for D=80mg and 5 min Infusion')
+simulate(8*60, 12*60, Dose=80, title='Concentration Profiles for D=80mg and 8 hours Infusion' )
+simulate(8*60, 12*60, Dose=80, title='Concentration Profiles for D=80mg and 8 hours Infusion Ki=1.37', Ke = 0.219*10**(-3), Ki=1.37, Vmax = 0.28)
+simulate(8*60, 12*60, Dose=80, title='Concentration Profiles for D=80mg and 8 hours Infusion Ki=0.137', Ke = 0.219*10**(-3), Ki=0.1* 1.37, Vmax = 0.28)
 
 infusion_times = [0.1, 0.25, 0.5, 1, 1.5, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] #in hours
 Doses = [50, 150, 250, 350]
-dictionary = {}
-for Dose in Doses:
-    dictionary[Dose] = []
-plt.figure()
-for i in infusion_times:
-    for Dose in Doses:
-        state_history, _, _ = simulate(i*60, 18*60, Dose=Dose, plot=False)
-        peak = max(state_history[:,1])
-        print(peak)
-        dictionary[Dose].append(peak)
-optimal_times = []
-for Dose in Doses:
-    plt.plot(infusion_times, dictionary[Dose], label=f'{Dose}mg')
-    optimal_times.append(infusion_times[np.argmax(dictionary[Dose])])
-plt.legend()
-plt.title("Peak Intracellular Concentration")
-plt.xlabel("Infusion Duration")
-plt.ylabel("Peak Concentration(ng/10^5cells)")
-plt.show()
-
-plt.plot(Doses, optimal_times)
-plt.title("Optimal Infusion Time for Different Doses")
-plt.xlabel("Dose (mg)")
-plt.ylabel("Optimal Infusion Time (hrs)")
-plt.show()
+find_peak_intracellular_concentration(Doses, infusion_times,Ke = 0.219*10**(-3), Ki=1.37, Vmax = 0.28 )
