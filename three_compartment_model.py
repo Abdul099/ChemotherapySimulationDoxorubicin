@@ -47,12 +47,12 @@ def simulate(infusion_time, simulation_time, Dose = 80, plot=True, title="", Ke 
     t_half: (min) half life of the drug in plasma
     '''
 
-    # Runge-Kutta (RK4) Numerical Integration for System of First-Order Differential Equations
+    # Runge-Kutta (RK4) Numerical Integration for System of 1st-Order ODEs
     def ode_system(_t, _y):
         ce = _y[0]
         ci = _y[1]
         termA = (ce/float(ce+Ke*phi)) - (ci/float(ci+Ki))
-        ce_new = P*St*(cv-ce)-dc*Vmax*termA   #mg/ml/min = ng/105cells/min* cells/ml *10^-6mg/ng*10^-5
+        ce_new = P*St*(cv-ce)-dc*Vmax*termA   #mg/ml/min 
         ci_new = Vmax*termA #ng/105cells/min  
         return np.array([ce_new,ci_new])
 
