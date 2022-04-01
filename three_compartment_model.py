@@ -7,7 +7,7 @@ P = 60*10**(-4) #cm/min
 dc = 6*10**(-3) #cell density 10^5cells/ml x10^-6 to account for units
 St = 200 # vascular density (cm^-1)
 A = 0.13*10**-3 # ml-1 inverse volume of patient
-t_half = 4.93 #half life of doxorubicin in  blood
+t_half = 4.75 #half life of doxorubicin in  blood #24*60
 alpha = 0.693/t_half # time constant for DR decay in blood 
 phi = 0.4 #volume fraction of extracellular space in tumor 
 # ==============================================================
@@ -103,7 +103,7 @@ def find_peak_intracellular_concentration(Doses, infusion_times, plot=True, titl
         plt.figure()
         for i in infusion_times:
             for Dose in Doses:
-                state_history, _, _ = simulate(i*60, 18*60, Dose=Dose, plot=False)
+                state_history, _, _ = simulate(i*60, 12*60, Dose=Dose, plot=False, Ki=Ki, Ke=Ke, Vmax=Vmax)
                 peak = max(state_history[:,1])
                 print(peak)
                 dictionary[Dose].append(peak)
@@ -112,14 +112,14 @@ def find_peak_intracellular_concentration(Doses, infusion_times, plot=True, titl
             plt.plot(infusion_times, dictionary[Dose], label=f'{Dose}mg')
             optimal_times.append(infusion_times[np.argmax(dictionary[Dose])])
         plt.legend()
-        plt.title("Peak Intracellular Concentration")
+        plt.title(f'Peak Intracellular Concentration  for Ki-{Ki} and Ke-{Ke}')
         plt.xlabel("Infusion Duration")
         plt.ylabel("Peak Concentration(ng/10^5cells)")
         plt.savefig(f'./saved_graphs/Peak Intracellular Concentration for Ki-{Ki} and Ke-{Ke}.png')
         plt.show()
         plt.figure()
         plt.plot(Doses, optimal_times)
-        plt.title("Optimal Infusion Time for Different Doses")
+        plt.title(f'Optimal Infusion Time for Different Doses for Ki-{Ki} and Ke-{Ke}')
         plt.xlabel("Dose (mg)")
         plt.ylabel("Optimal Infusion Time (hrs)")
         plt.savefig(f'./saved_graphs/Optimal Infusion Time for Ki-{Ki} and Ke-{Ke}.png')
@@ -129,9 +129,25 @@ def find_peak_intracellular_concentration(Doses, infusion_times, plot=True, titl
 
 simulate(1, 40, Dose=80, title='Concentration Profiles for D=80mg and 5 min Infusion')
 simulate(8*60, 12*60, Dose=80, title='Concentration Profiles for D=80mg and 8 hours Infusion' )
-simulate(8*60, 12*60, Dose=80, title='Concentration Profiles for D=80mg and 8 hours Infusion Ki=1.37', Ke = 0.219*10**(-3), Ki=1.37, Vmax = 0.28)
-simulate(8*60, 12*60, Dose=80, title='Concentration Profiles for D=80mg and 8 hours Infusion Ki=0.137', Ke = 0.219*10**(-3), Ki=0.1* 1.37, Vmax = 0.28)
+# simulate(8*60, 12*60, Dose=131, title='Concentration Profiles for D=131mg and 8 hours Infusion Ke=x10', Ke = 10*0.219*10**(-3), Ki=1.37, Vmax = 0.28)
+# simulate(8*60, 12*60, Dose=131, title='Concentration Profiles for D=131mg and 8 hours Infusion Ki=1.37', Ke = 0.219*10**(-3), Ki=1.37, Vmax = 0.28)
 
-infusion_times = [0.1, 0.25, 0.5, 1, 1.5, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] #in hours
-Doses = [50, 150, 250, 350]
-find_peak_intracellular_concentration(Doses, infusion_times,Ke = 0.219*10**(-3), Ki=1.37, Vmax = 0.28 )
+simulate(2*60, 12*60, Dose=200, title='Concentration Profiles for D=200mg and half hour Infusion')
+simulate(2*60, 12*60, Dose=500, title='Concentration Profiles for D=500mg and 2 hours Infusion' )
+
+infusion_times = [0.1, 0.25, 0.5, 1, 1.5, 2, 3, 4, 5] #in hours
+Doses = [50, 200, 500, 1000]
+# find_peak_intracellular_concentration(Doses, infusion_times,Ke = 0.219*10**(-3), Ki=1.37, Vmax = 0.28 )
+# find_peak_intracellular_concentration(Doses, infusion_times,Ke = 0.219*10**(-3), Ki=1.37/5, Vmax = 0.28 )
+
+'''
+Basic Model Sim
+Different Ki's Peak IC 
+Peter's graph for survival
+Revesit Ki slide
+Graphs with recomended treatment params --> square graph (optional figure out exact shape)
+Ultrasound: increase P:
+Liposomes: Increase Half life
+summary for ci vs t graphs at end 
+
+'''
